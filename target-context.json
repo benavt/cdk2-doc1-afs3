@@ -1,0 +1,33 @@
+{
+  "verified_on": "2026-11-02",
+  "targets": {
+    "CDK2_DOC1": {
+      "title": "CDK2\u2013DOC1 AFS3 ensemble",
+      "record_summary": "Two input protein chains: CDK2 (298 residues); DOC1 (115 residues).",
+      "project_writeup": {
+        "status": "input and analysis scope documented",
+        "biological_relevance": "",
+        "ensemble_interpretation": "All 1,000 original samples are retained. Energy colors annotate the complete construct and do not alter clustering.",
+        "project_citations": []
+      },
+      "references": [],
+      "provenance": {
+        "analysis_sequence_sha256": "5cd8fd1dfdf0231a67fd4917d1e824ea7e004e9f57e56378b98dea223e32f9ee"
+      }
+    },
+    "CDK2_DOC1t": {
+      "title": "CDK2\u2013DOC1 AFS3 ensemble",
+      "record_summary": "Two input protein chains: CDK2 (298 residues); DOC1t (55 residues).",
+      "project_writeup": {
+        "status": "input and analysis scope documented",
+        "biological_relevance": "",
+        "ensemble_interpretation": "All 1,000 original samples are retained. Energy colors annotate the complete construct and do not alter clustering.",
+        "project_citations": []
+      },
+      "references": [],
+      "provenance": {
+        "analysis_sequence_sha256": "4f2057c5a3dddecbd2cefa2c9a5a91c501d699293f2af29b2252a34b9869a753"
+      }
+    }
+  }
+}
