@@ -52,7 +52,14 @@
   document.querySelector('.plot-column').classList.toggle('is-overview',!key);tools.hidden=!key;
   resize();
  }
- window.AtlasExplorer={feature,showScreen,refresh:resize,setBusy(busy){$('resetPlot').disabled=busy;$('savePlot').disabled=busy},get featured(){return featured}};
+ function openDetails(target){
+  if(!target?.matches('details'))return;
+  if(expanded&&!expanded.contains(target))restore();
+  for(let panel=target;panel;panel=panel.parentElement?.closest('details'))panel.open=true;
+  resize();
+ }
+ window.AtlasExplorer={feature,showScreen,openDetails,refresh:resize,setBusy(busy){$('resetPlot').disabled=busy;$('savePlot').disabled=busy},get featured(){return featured}};
+ window.addEventListener('atlas:supplementary',()=>{if(expanded?.hidden)restore();resize()});
  window.addEventListener('atlas:cohort', event => {
   const { current, base } = event.detail;currentTarget=current.target;
   const baseCounts=new Map();base.methods.forEach(method=>baseCounts.set(method,(baseCounts.get(method)||0)+1));
@@ -124,7 +131,7 @@
   });
   document.addEventListener('click',event=>{
    const link=event.target.closest('a[href^="#"]');if(!link)return;
-   const target=$(link.hash.slice(1));if(target?.matches('details')){target.open=true;resize()}
+   openDetails($(link.hash.slice(1)));
   });
   window.addEventListener('hashchange',()=>{if(decodeURIComponent(location.hash.slice(1)).split('?')[0]!==currentTarget)restore()});
   const explorer=$('clusterExplorer'),heading=explorer.querySelector(':scope > summary');

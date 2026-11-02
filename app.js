@@ -9,7 +9,7 @@ function configureRefinementControls(){
  options();$('family').onchange=()=>{familyPrefix=$('family').value;options();scheduleDraw().catch(fail)};
  $('clusterSubset').onchange=()=>{const selected=[...$('clusterSubset').selectedOptions].map(x=>x.value);if(!selected.length){options()}else chosenClusters=new Set(selected);scheduleDraw().catch(fail)};
  $('allClusters').onclick=()=>{options();scheduleDraw().catch(fail)};
- $('decisionsPanel').hidden=!!data.visible_view_policy||!['whole','bounded'].includes(data.view_id||'whole')||!data.decisions;
+ $('decisionsPanel').hidden=!!data.visible_view_policy||!['whole','bounded'].includes(data.view_id||'whole')||(!data.decisions?.length&&!data.wave_summary?.length);
  for(const link of document.querySelectorAll?.('.page-index a[href="#decisionsPanel"]')||[])link.hidden=$('decisionsPanel').hidden;
  $('boundedSummary').textContent=data.bounded_summary||'';$('decisionRows').replaceChildren();
  for(const row of data.decisions||[]){const tr=document.createElement('tr');const aris=Object.values(row.repeat_seed_ari||{}),tm=(row.tm_validation||[]).map(x=>x.median_margin);const fmt=x=>Number.isFinite(x)?x.toFixed(3):'—';for(const value of [row.parent,row.population,row.status,(row.child_sizes||[]).join(' / '),fmt(aris.length?Math.min(...aris):null),fmt(row.feature_silhouette),fmt(tm.length?Math.min(...tm):null),(row.reasons||[]).join(', ')]){const td=document.createElement('td');td.textContent=String(value??'—');tr.append(td)}$('decisionRows').append(tr)}
@@ -28,6 +28,19 @@ function filteredMedoidGrid(){
  const csv=[['cluster',...labels].join(','),...labels.map((label,i)=>[label,...grid.matrix[i]].join(','))].join('\n')+'\n';
  filterCSV=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));grid.csv=filterCSV;$('medoidTMCsv').download=data.target+'_'+(data.range_id||'all')+'_'+data.view_id+'_selected_medoid_TM.csv';return grid;
 }
+function refreshSupplementary(){
+ const panels=['countReview','tmDistribution','medoidTMSection','distanceMaps'].map($).filter(Boolean);
+ let number=0;
+ for(const panel of panels){
+  if(panel.hidden){panel.open=false;continue}
+  const title=panel.querySelector?.(':scope > summary > span');
+  if(title)title.textContent='S'+(++number)+' · '+title.textContent.replace(/^S\d+\s*·\s*/,'');
+ }
+ const available=panels.some(panel=>!panel.hidden)||!!$('pairSection')&&!$('pairSection').hidden;
+ if($('supplementary'))$('supplementary').hidden=!available;
+ for(const link of document.querySelectorAll?.('.page-index a[href="#supplementary"]')||[])link.hidden=!available;
+ if(typeof CustomEvent!=='undefined')window.dispatchEvent?.(new CustomEvent('atlas:supplementary'));
+}
 async function chooseMedoidPair(left,right,value){
  const current=data,serial=++pairSerial;
  pairSelecting=true;try{await choose(left)}finally{pairSelecting=false}
@@ -40,7 +53,7 @@ async function chooseMedoidPair(left,right,value){
   if(!text){const r=await fetch(c.file,{signal:AbortSignal.timeout(15000)});if(!r.ok)throw Error('Medoid file unavailable');text=await r.text();c.coordinate_text=text}
   if(!active())return;const v=pairViewers[i];v.removeAllModels();v._aisModels=[v.addModel(text,c.format)];v._aisDescriptor=c;styleSavedStructure(v,c.color);v.resize();fitVisibleStructure(v);
  }
- frameMedoidPair();
+ frameMedoidPair();refreshSupplementary();
 }
 
 'use strict';
@@ -313,17 +326,18 @@ async function drawProjections(){
 }
 async function draw(){
  window.AtlasExplorer?.setBusy(true);
- updateFilterDisplay();await drawProjections();await drawViolins();await drawDistanceMaps();await drawCandidateReview();await drawMedoidTM();await drawBonsai();window.AtlasExplorer?.setBusy(false);
+ updateFilterDisplay();await drawProjections();await drawViolins();await drawDistanceMaps();await drawCandidateReview();await drawMedoidTM();refreshSupplementary();await drawBonsai();window.AtlasExplorer?.setBusy(false);
 }
 function configureDistanceMaps(){
  const entry=supplementaryMetadataCatalog.targets?.[data.target]?.ranges?.[data.range_id||'all'];savedHeatmapSpecs=[];
  if(entry?.views?.[data.view_id||'whole']){
+  $('distanceMaps').hidden=false;
   const caption=document.createElement('p');caption.className='hint';caption.textContent=entry.sample_count.toLocaleString()+' models · canonical residues '+entry.positions[0]+'–'+entry.positions.at(-1)+'. '+entry.note;
   const plots=[['median_matrix','Median Cα distance (Å)','Viridis'],['variance_matrix','Cα distance variance (Å²)','Magma']].map(([key,name,scale])=>{const section=document.createElement('section'),title=document.createElement('h3'),node=document.createElement('div');title.textContent=name;node.id='saved-'+key;section.append(title,node);savedHeatmapSpecs.push({node,entry,key,name,scale});return section});
   $('heatmaps').replaceChildren(caption,...plots);return;
  }
  const images=(data.heatmaps||[]).map(p=>{const a=document.createElement('a');a.href=p.file;a.target='_blank';const img=document.createElement('img');img.src=p.file;img.alt=p.name;img.loading='lazy';a.append(img);return a});
- if(!images.length){const note=document.createElement('p');note.className='hint';note.textContent='Distance summaries for this residue range have not been added to this saved display.';images.push(note)}
+ $('distanceMaps').hidden=!images.length;
  $('heatmaps').replaceChildren(...images);
 }
 async function drawDistanceMaps(){
@@ -331,7 +345,7 @@ async function drawDistanceMaps(){
 }
 function scheduleDraw(){const request=targetRequest;renderQueue=renderQueue.catch(()=>{}).then(()=>request===targetRequest?draw():undefined);return renderQueue}
 async function drawViolins(){
- const score=data.schemes.find(s=>s.key==='tm_colabfold12_rank1_chainA_res5_95');$('tmDistribution').hidden=!score;if(!score)return;
+ const score=data.schemes.find(s=>s.key==='tm_colabfold12_rank1_chainA_res5_95');$('tmDistribution').hidden=!score||!score.values.some((value,i)=>Number.isFinite(value)&&visibleCluster(data.clusters[i]));if($('tmDistribution').hidden)return;
  const traces=data.representatives.filter(c=>visibleCluster(c.cluster)).map(c=>{const indices=data.clusters.map((label,i)=>label===c.cluster?i:-1).filter(i=>i>=0),values=indices.map(i=>score.values[i]).filter(Number.isFinite),name=c.cluster+' · n='+values.length;if(values.length<2||new Set(values).size<2)return {type:'scatter',mode:'markers',name,x:[name],y:[values[0]],marker:{color:c.color,size:9},hovertemplate:'TM: %{y:.4f}<extra>'+escapeText(c.cluster)+'</extra>'};return {type:'violin',name,x:values.map(()=>name),y:values,customdata:indices.filter(i=>Number.isFinite(score.values[i])).map(i=>data.models[i]),text:indices.filter(i=>Number.isFinite(score.values[i])).map(i=>data.models[i]),line:{color:c.color,width:1.3},fillcolor:c.color,opacity:.75,box:{visible:true},meanline:{visible:false},points:false,spanmode:'hard',scalemode:'width',hovertemplate:'%{text}<br>TM: %{y:.4f}<extra>'+escapeText(c.cluster)+'</extra>'}});
  await AtlasResponsive.react($('tmViolin'),traces,{paper_bgcolor:'#fff',plot_bgcolor:'#fff',margin:{l:65,r:25,t:20,b:145},font:{family:'Arial, sans-serif',size:12,color:'#344f5b'},showlegend:false,yaxis:{title:{text:'TM-score to 12mer reference (5–95)'},range:[0,1],gridcolor:'#edf1f2'},xaxis:{type:'category',tickangle:-55,automargin:true},uirevision:data.target+'-'+(data.range_id||'all')+'-'+data.view_id+'-tm-violin'},{responsive:true,displaylogo:false,toImageButtonOptions:{format:'svg',filename:data.target+'_'+(data.range_id||'all')+'_'+data.view_id+'_TM_5-95_cluster_violins'}});
  const represented=new Set(data.representatives.filter(c=>visibleCluster(c.cluster)).map(c=>c.cluster));const scored=score.values.filter((value,i)=>Number.isFinite(value)&&represented.has(data.clusters[i])).length;
@@ -403,7 +417,7 @@ function navigateSavedSection(event){
  const anchor=event.target.closest?.('a[href^="#"]');if(!anchor||event.defaultPrevented||event.button>0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
  const fragment=anchor.getAttribute('href').slice(1);let id;try{id=decodeURIComponent(fragment)}catch{return}
  const section=$(id);if(!section)return;
- event.preventDefault();if(section.tagName==='DETAILS')section.open=true;section.scrollIntoView({block:'start',behavior:'smooth'});
+ event.preventDefault();if(section.tagName==='DETAILS'){if(window.AtlasExplorer?.openDetails)window.AtlasExplorer.openDetails(section);else section.open=true}section.scrollIntoView({block:'start',behavior:'smooth'});
 }
 function savedResidueRanges(target){
  const configured=target.residue_ranges||[],entries=configured.filter(r=>typeof r.id==='string'&&typeof r.name==='string'),all=entries.find(r=>r.id==='all');
@@ -463,7 +477,7 @@ function clearStructure(title='Select a cluster',note=''){
  ++loadSerial;++pairSerial;selected=null;selectedModelIndex=null;viewer._aisDescriptor=null;viewer._aisModels=[];$('clusterSelect').value='';viewer.spin(false);viewer.removeAllModels();viewer._aisModels=[];viewer._aisDescriptor=null;viewer.render();
  $('modelTitle').textContent=title;$('modelInfo').textContent=note;
  for(const id of ['structure','ensemblePdb','ensemblePse']){$(id).removeAttribute('href');$(id).hidden=true}
- $('pairSection').hidden=true;if(bonsaiPanel)bonsaiPanel.select(null);
+ $('pairSection').hidden=true;if(bonsaiPanel)bonsaiPanel.select(null);refreshSupplementary();
  updateStructureViewControls();
  for(const tr of $('clusterRows').children){tr.classList.remove('selected');tr.setAttribute('aria-selected','false')}
 }
@@ -510,7 +524,7 @@ async function start(){
 window.addEventListener('DOMContentLoaded',()=>start().catch(fail));
 
 async function drawCandidateReview(){
- const review=data.visible_view_policy?null:data.count_review;$('countReview').hidden=!review;if(!review)return;
+ const review=data.visible_view_policy?null:data.count_review;$('countReview').hidden=!review?.counts?.length;if($('countReview').hidden)return;
  $('countNote').textContent=review.note;
  const rows=review.counts,common={paper_bgcolor:'#fff',plot_bgcolor:'#fff',margin:{l:70,r:25,t:30,b:50},font:{family:'Arial, sans-serif',size:12,color:'#344f5b'}};
  const lines=[['within_tm_equal_cluster','Within-cluster TM','#196a8b'],['between_tm_equal_cluster_pair','Between-cluster TM','#ce6818'],['provisional_tm_contrast','Within minus between','#7c5197']].map(([key,name,color])=>({type:'scatter',mode:'lines+markers',name,x:rows.map(r=>r.k),y:rows.map(r=>r[key]),line:{color,width:2},marker:{size:6},hovertemplate:'K=%{x}<br>%{y:.4f}<extra>'+name+'</extra>'}));
@@ -523,7 +537,8 @@ async function drawCandidateReview(){
 }
 
 async function drawMedoidTM(){
- const grid=filteredMedoidGrid();$('medoidTMTitle').textContent=grid?.title||'TM similarity across cluster medoids';$('medoidTM').hidden=!grid;$('medoidTMNote').textContent=grid?.note||data.medoid_tm_note||'The complete medoid matrix is being prepared; no truncated grid is substituted.';$('medoidTMCsv').hidden=!grid?.csv;if(!grid)return;
+ const grid=filteredMedoidGrid(),available=!!grid?.labels?.length&&grid.matrix.some(row=>row.some(Number.isFinite));
+ $('medoidTMSection').hidden=!available;$('medoidTMTitle').textContent=grid?.title||'TM similarity across cluster medoids';$('medoidTM').hidden=!available;$('medoidTMNote').textContent=grid?.note||data.medoid_tm_note||'';$('medoidTMCsv').hidden=!available||!grid?.csv;if(!available){$('medoidTMCsv').removeAttribute('href');return}
  if(grid.csv)$('medoidTMCsv').href=grid.csv;
  const n=grid.labels.length,height=Math.max(500,Math.min(1000,250+n*18));
  // Reserve the rendered plot height in document flow, including after subset changes.
