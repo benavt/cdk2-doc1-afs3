@@ -133,7 +133,7 @@
           entry.append(dot, String(value ?? 'Unspecified')); legend.append(entry);
         }
       }
-      note.textContent = `${payload.models.length} models · ${data.representatives.length} clusters. Select a point to view its cluster.`+(highlightedModels?` ${visibleHighlighted} of ${highlightedModels.size} highlighted models shown.`:'');
+      note.textContent = `${payload.models.length} models · ${data.representatives.length} clusters. `+(data.model_files?'Select a point to view that exact model.':'Select a point to view its cluster.')+(highlightedModels?` ${visibleHighlighted} of ${highlightedModels.size} highlighted models shown.`:'');
       if (detailsHref) {
         const link = document.createElement('a'); link.href = detailsHref; link.className = 'bonsai-details-link'; link.textContent = 'Details'; link.setAttribute('aria-label', 'Bonsai plot details and controls');
         note.append(' ', link);

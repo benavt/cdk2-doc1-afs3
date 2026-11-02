@@ -117,7 +117,7 @@ function updateStructureScopeNote(){
  if(mode==='plddt')note+=' Reported per-atom pLDDT: dark blue ≥90, light blue 70–90, yellow 50–70, orange <50. Missing observations are gray.';
  if(mode==='regions'&&!regions.length)note+=' Verified saved variance-region labels are unavailable.';
  note+=' Display controls do not alter saved coordinates or downloads; downloads contain the full saved structures.';
- $('structureScopeNote').textContent=note;
+ $('structureScopeNote').textContent=note;if(structureMappingError)$('structureDetails')?.setAttribute('open','');
  const legend=$('structureRegionLegend');legend.replaceChildren();
  const entries=mode==='chains'?[{label:'Chain A',color:'#008000'},{label:'Chain B',color:'#00ffff'}]:mode==='plddt'?[{label:'pLDDT ≥90',color:'#0053d6'},{label:'70–90',color:'#65cbf3'},{label:'50–70',color:'#ffdb13'},{label:'<50',color:'#ff7d45'}]:mode==='regions'&&regions.length?[...regions,{label:'Other residues',color:'#aebbc1'}]:[];
  legend.hidden=!entries.length;
@@ -202,6 +202,7 @@ function rigidViewFit(mobile,reference){
  return {rotation,translation};
 }
 function updateStructureViewControls(){
+ if(structureViewMessage)$('structureDetails')?.setAttribute('open','');
  const button=$('setStructureView');if(!button)return;
  const available=!!viewer?._aisModels?.length&&!!structureViewContext();
  button.disabled=!available;button.setAttribute('aria-pressed',String(!!structureViewAnchor));button.textContent=structureViewAnchor?'Release view':'Set view';
@@ -348,6 +349,11 @@ function pointModelDescriptor(current,index){
  const label=current.clusters[index],cluster=current.representatives.find(row=>row.cluster===label),palette=current.schemes.find(s=>s.key==='clusters')?.colors||{};
  return {cluster:label,model:current.models[index],method:current.methods[index],count:current.clusters.filter(value=>value===label).length,color:cluster?.color||palette[label]||'#808080',file,sha256:digest,format:extension==='mmcif'?'cif':extension,exact_model_index:index};
 }
+function representativeDownloadLinks(cluster){
+ const extension=cluster.file?.split('.').at(-1)?.toLowerCase(),format=extension==='mmcif'?'CIF':extension?.toUpperCase();
+ const model=cluster.file?'<a download href="'+escapeText(cluster.file)+'" aria-label="Download '+escapeText(cluster.cluster)+' representative '+escapeText(format||'model')+'">Representative '+escapeText(format||'model')+'</a>':'';
+ return model+(cluster.ensemble_file?' · <a download href="'+escapeText(cluster.ensemble_file)+'">Ensemble PDB</a>':'')+(cluster.ensemble_pse?' · <a download href="'+escapeText(cluster.ensemble_pse)+'">Ensemble PSE</a>':'');
+}
 async function savedCoordinate(descriptor){
  if(descriptor.coordinate_text)return descriptor.coordinate_text;
  const response=await fetch(descriptor.file,{cache:'no-cache',signal:AbortSignal.timeout(15000)});if(!response.ok)throw Error('HTTP '+response.status);
@@ -481,7 +487,7 @@ async function load(target,viewId='whole',rangeId='all'){
  const preferredColor=previousColor||requestedColor;if(visibleSchemes.some(s=>s.key===preferredColor&&!s.unavailable))$('color').value=preferredColor;updateMetricOverlayNote();refreshSelectionHighlight();
  const reviewDownloads=data.review_downloads||(range.id==='all'&&!data.visible_view_policy?{waveMemberships:'wave-memberships.csv',decisionsDownload:'decisions.csv',boundsDownload:'bounds.json'}:{});for(const id of ['waveMemberships','decisionsDownload','boundsDownload']){const path=reviewDownloads[id];$(id).hidden=!path;if(path)$(id).href=rangeAssetPath(path,{...range,asset_root:data.presentation_asset_root??range.asset_root});else $(id).removeAttribute('href')}
  $('members').href=data.membership_file;$('clusterRows').replaceChildren();$('clusterSelect').replaceChildren(Object.assign(document.createElement('option'),{value:'',textContent:'Select a cluster'}),...data.representatives.map(c=>Object.assign(document.createElement('option'),{value:c.cluster,textContent:c.cluster+' · '+c.count.toLocaleString()})));
- for(const c of data.representatives){const tr=document.createElement('tr');tr.dataset.cluster=c.cluster;tr.tabIndex=0;tr.setAttribute('role','button');tr.setAttribute('aria-label','Inspect '+c.cluster);tr.innerHTML=`<td><span class="dot" style="background:${c.color}"></span>${escapeText(c.cluster)}</td><td>${c.count.toLocaleString()}</td><td>${escapeText(population(c.count))}</td><td>${escapeText(c.method)}</td>${data.metric_note?'<td>'+(Number.isFinite(referenceSimilarity(c))?referenceSimilarity(c).toFixed(3):'Unavailable')+'</td>':''}<td>${c.ensemble_file?'<a download href="'+escapeText(c.ensemble_file)+'">PDB</a>':''} ${c.ensemble_pse?'<a download href="'+escapeText(c.ensemble_pse)+'">PSE</a>':''}</td>`;for(const a of tr.querySelectorAll('a')){a.onclick=e=>e.stopPropagation();a.onkeydown=e=>e.stopPropagation()}tr.onclick=()=>choose(c.cluster).catch(fail);tr.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose(c.cluster).catch(fail)}};$('clusterRows').append(tr)}
+ for(const c of data.representatives){const tr=document.createElement('tr');tr.dataset.cluster=c.cluster;tr.tabIndex=0;tr.setAttribute('role','button');tr.setAttribute('aria-label','Inspect '+c.cluster);tr.innerHTML=`<td><span class="dot" style="background:${c.color}"></span>${escapeText(c.cluster)}</td><td>${c.count.toLocaleString()}</td><td>${escapeText(population(c.count))}</td><td>${escapeText(c.method)}</td>${data.metric_note?'<td>'+(Number.isFinite(referenceSimilarity(c))?referenceSimilarity(c).toFixed(3):'Unavailable')+'</td>':''}<td>${representativeDownloadLinks(c)}</td>`;for(const a of tr.querySelectorAll('a')){a.onclick=e=>e.stopPropagation();a.onkeydown=e=>e.stopPropagation()}tr.onclick=()=>choose(c.cluster).catch(fail);tr.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose(c.cluster).catch(fail)}};$('clusterRows').append(tr)}
  configureDistanceMaps();
  $('mask').textContent=data.mask_note;$('provenance').textContent=JSON.stringify(data.provenance,null,2);
  await draw();if(request===targetRequest){if(data.representatives.length)await choose(data.representatives[0].cluster);if(request===targetRequest)setAnalysisLoading(false)}
@@ -531,9 +537,9 @@ async function drawBonsai(){
  const serial=++bonsaiSerial,current=data;$('bonsaiPanel').hidden=!current.bonsai;if($('bonsaiDetails'))$('bonsaiDetails').hidden=!current.bonsai;if(!current.bonsai)return;
  if(!current.bonsaiPayload){const response=await fetch(current.bonsai.file,{cache:'no-cache'});if(!response.ok)throw Error('Saved Bonsai layout unavailable');const bytes=await response.arrayBuffer(),digest=globalThis.crypto?.subtle?Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(x=>x.toString(16).padStart(2,'0')).join(''):null;if(digest!==null&&digest!==current.bonsai.sha256)throw Error('Saved Bonsai layout hash mismatch');current.bonsaiPayload=JSON.parse(new TextDecoder().decode(bytes));}
  if(serial!==bonsaiSerial||data!==current)return;
- if(!bonsaiPanel)bonsaiPanel=BonsaiEnsemble.create($('bonsai'),{onChoose:(cluster,model)=>choose(cluster).catch(fail),detailsHref:'#bonsaiDetails'});
+ if(!bonsaiPanel)bonsaiPanel=BonsaiEnsemble.create($('bonsai'),{onChoose:(cluster,model)=>choose(cluster,data.model_files?data.models.indexOf(model):null).catch(fail),detailsHref:'#bonsaiDetails'});
  const representatives=current.representatives.filter(c=>visibleCluster(c.cluster));
- if($('bonsaiStructureDetails'))$('bonsaiStructureDetails').textContent=representatives.some(row=>row.ensemble_file||row.ensemble_text)?'Use Structure view to switch between Representative and Comparison ensemble.':'The 3D viewer shows the saved cluster representative; coordinate ensembles are unavailable for this result.';
+ if($('bonsaiStructureDetails'))$('bonsaiStructureDetails').textContent=current.model_files?'Select any Bonsai point to inspect that exact original model, including HDBSCAN unassigned models. Download each cluster representative from the cluster table.':representatives.some(row=>row.ensemble_file||row.ensemble_text)?'Use Structure view to switch between Representative and Comparison ensemble.':'The 3D viewer shows the saved cluster representative; coordinate ensembles are unavailable for this result.';
  const models=current.bonsaiPayload.models.filter(r=>visibleCluster(current.clusters[current.models.indexOf(r.model)])),key=models.map(r=>r.model).join('\0');if(current.filteredBonsai?.key!==key)current.filteredBonsai={key,payload:{...current.bonsaiPayload,models}};const filtered=current.filteredBonsai.payload;bonsaiPanel.update({...current,representatives},filtered,scheme(),$('pca'),hiddenProjectionCategories,selectionHighlight.active?new Set(selectionHighlight.orderedIndices.map(i=>current.models[i])):null);if(selected)bonsaiPanel.select(selected);
 }
 

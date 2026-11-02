@@ -113,3 +113,13 @@ nav#targets{display:flex;gap:6px;flex-wrap:wrap;padding:0 0 16px;margin:0 0 18px
 /* Saved selection policies stay independent of cluster inspection and color. */
 .selection-controls{display:flex;align-items:center;flex-wrap:wrap;gap:6px 14px;padding:7px 12px;border-bottom:1px solid var(--line);min-width:0;background:#fcfcf9}.selection-controls>label,.selection-controls details label{display:flex;align-items:center;gap:7px;font-size:11px;min-width:0}.selection-controls>label{flex:1 1 270px;max-width:520px}.selection-controls select{min-width:0;max-width:100%;font-size:11px;flex:1;width:0}.selection-controls details{font-size:11px;min-width:0;flex:0 1 auto}.selection-controls summary{cursor:pointer;white-space:nowrap}.selection-controls details>div{display:flex;flex-wrap:wrap;gap:7px 14px;padding:7px 0 2px}.selection-controls details label{flex:1 1 170px}.selection-controls p{flex-basis:100%;font-size:10px;line-height:1.4;margin:0;color:var(--muted);overflow-wrap:anywhere}.cluster-explorer[aria-busy=true] #pca,.cluster-explorer[aria-busy=true] #umap,.cluster-explorer[aria-busy=true] #tsne,.cluster-explorer[aria-busy=true] #bonsai{visibility:hidden}
 @media(max-width:699px){.selection-controls{padding:6px 8px;gap:5px 10px}.selection-controls>label{flex-basis:100%;max-width:none}.selection-controls details{flex-basis:100%}.selection-controls details label{flex-basis:100%}.selection-controls details select{max-width:240px}}
+
+/* Keep display settings above the model and supporting prose out of its canvas. */
+#comparisonScreen .structure-display-controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px 10px;margin:8px 0;flex:none}
+#comparisonScreen .structure-display-controls>label{display:flex;flex-direction:column;align-items:stretch;gap:3px;width:auto;min-width:0;font-size:10px}
+#comparisonScreen .structure-display-controls select{width:100%;max-width:none;font-size:11px}
+.structure-actions{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px}.structure-actions button{font-size:11px;padding:4px 7px}
+#comparisonScreen .structure-details{flex:none;border-top:1px solid var(--line);margin-top:7px;padding-top:6px;font-size:11px}
+.structure-details>summary{cursor:pointer;color:var(--muted)}.structure-downloads{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:8px;font-size:11px}
+.structure-details p{font-size:11px!important;line-height:1.4;margin:8px 0!important}
+@media(max-width:699px){#comparisonScreen .structure-display-controls{grid-template-columns:repeat(2,minmax(0,1fr))}#comparisonScreen #molecule{height:clamp(300px,82vw,400px);min-height:300px}}
