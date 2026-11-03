@@ -61,3 +61,25 @@ locations are unchanged. Imported adapters retain the source MIT notice in LICEN
 For a new source-only checkout, use Git partial clone (`git clone --filter=blob:none`)
 to avoid downloading historical publication blobs. Git history is preserved.
 The separate research-workflows policy pin retains the producer contract.
+
+## Proposed workflow library update
+
+The exact dependency pin includes the shared immutable-intake, run-local metrics,
+verified recovery and report-pagination changes. Merge this pin update only after
+the library PR is reviewed and its commit remains reachable. The previous pin is
+retained in Git for rollback. This source update selects no scientific run and
+does not regenerate the saved site or change its manifest, URLs or bytes.
+
+New generic analyses use `structure-clustering inspect-inputs` and
+`structure-clustering analyze --plan` before a separately approved run. They expand
+all conformers, preserve native chain IDs, require explicit chain correspondence
+when needed, and leave expanded conformers unscored without an explicit score map.
+Metrics are fresh and run-local unless an explicit database is supplied; that
+database's stored label rules are retained unless overridden. New run recovery
+requires identical inputs, settings, library revision and runtime. Molecular
+reports are opt-in and include every cluster across additional pages.
+
+The project-owned ProteinEBM controllers retain their scientific settings and
+frozen paths. Their historical manifests do not acquire the generic recovery
+contract through a dependency upgrade. Source/import and frozen-manifest checks
+are compatibility evidence, not native scientific validation of a new run.
