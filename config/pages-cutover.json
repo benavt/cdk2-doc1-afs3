@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "site_url": "https://benavt.github.io/cdk2-doc1-afs3/",
+  "current_source": {
+    "build_type": "legacy",
+    "branch": "main",
+    "path": "/"
+  },
+  "proposed_source": {
+    "build_type": "workflow",
+    "artifact_root": "site/build"
+  },
+  "status": "awaiting_review_and_explicit_cutover_approval",
+  "preconditions": [
+    "Source and shared privacy CI pass",
+    "Exact static native-byte and relative-path parity passes",
+    "Reconcile intervening publications before merge",
+    "Preserve original source commit and verified snapshot for rollback"
+  ],
+  "cutover_order": [
+    "Verify the immutable rollback snapshot and retain the current deployment",
+    "With explicit approval, switch Pages build type to workflow without changing the repository URL",
+    "Merge the reviewed source migration head",
+    "Dispatch the manual workflow on main with the exact manifest SHA-256",
+    "Verify the unchanged public URL and representative HTML/JSON/model/download routes",
+    "If needed, redeploy the verified snapshot artifact; do not restore source to a main branch without index.html"
+  ]
+}

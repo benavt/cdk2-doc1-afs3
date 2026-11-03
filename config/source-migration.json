@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "source_repository": "benavt/Structure_Clustering",
+  "source_commit": "8ffc2098f60df1ff6902aca54b8d7c62a1fcff8a",
+  "files": [
+    {
+      "source": "scripts/proteinebm_complex/bonsai_supplement.py",
+      "source_sha256": "8113660e2aa47b5390bda5f8a0dbc574d6cf6d0b4517e9348658bd12db298459",
+      "destination": "scripts/proteinebm_complex/bonsai_supplement.py",
+      "project_sha256": "a5e838388f07c94ebcd03d22a25696d83c4bfde16abe629d4c8481e822c94ffe",
+      "adaptation": "Resolve reusable library helper through the installed scripts package"
+    },
+    {
+      "source": "scripts/proteinebm_complex/common.py",
+      "source_sha256": "a6cec30b496023d4e2fa1b9cf2abed6d14da7ae8a329b32fdf723df07a78ba52",
+      "destination": "scripts/proteinebm_complex/common.py",
+      "project_sha256": "a6cec30b496023d4e2fa1b9cf2abed6d14da7ae8a329b32fdf723df07a78ba52",
+      "adaptation": "Bytes unchanged"
+    },
+    {
+      "source": "scripts/proteinebm_complex/export_atlas.py",
+      "source_sha256": "3f3450bcbb560488b7d4be06d4047ab80a8e8ff19b606ee212b7b4346e34f18d",
+      "destination": "scripts/proteinebm_complex/export_atlas.py",
+      "project_sha256": "0d9efe6cc1220d18758d15ad43a5777a2afec7a3744168be1906bfa1e43762ec",
+      "adaptation": "Project pin added to source inventory; reusable imports/assets resolve from installed library"
+    },
+    {
+      "source": "scripts/proteinebm_complex/features.py",
+      "source_sha256": "85e66c44af86083dcac5e8775619c0a6cb2a6b6da1731c85310a353462095cfe",
+      "destination": "scripts/proteinebm_complex/features.py",
+      "project_sha256": "85e66c44af86083dcac5e8775619c0a6cb2a6b6da1731c85310a353462095cfe",
+      "adaptation": "Bytes unchanged"
+    },
+    {
+      "source": "scripts/proteinebm_complex/hdbscan.py",
+      "source_sha256": "7cf05a940558fc8e62799e10212504a13fac0b6c823706a78d44a1af0c8fe29b",
+      "destination": "scripts/proteinebm_complex/hdbscan.py",
+      "project_sha256": "956d4eda76e12d1627a7269ff5448e9f17af183064adccb013d10d0e7089a355",
+      "adaptation": "Project pin added to source inventory; reusable imports/assets resolve from installed library"
+    },
+    {
+      "source": "scripts/proteinebm_complex/prepare.py",
+      "source_sha256": "ae9c22e8fb314416f1b704bc6640479bb421dd6245c600854a459b80c43bcccc",
+      "destination": "scripts/proteinebm_complex/prepare.py",
+      "project_sha256": "b6cdca1e6c040e3205e752f07293ec6befd90479bc724afebf81db1768d241a1",
+      "adaptation": "Project pin added to source inventory; reusable imports/assets resolve from installed library"
+    },
+    {
+      "source": "scripts/proteinebm_complex/worker.py",
+      "source_sha256": "b617b398290ed97dc24301c0dfebe53ef25b3b5ae029289a8fab76771141a705",
+      "destination": "scripts/proteinebm_complex/worker.py",
+      "project_sha256": "b617b398290ed97dc24301c0dfebe53ef25b3b5ae029289a8fab76771141a705",
+      "adaptation": "Bytes unchanged"
+    },
+    {
+      "source": "scripts/proteinebm_complex/README.md",
+      "source_sha256": "303720a16d6366df884cfd0cd476e33c2980a68d8b227c5f244d478576906f4f",
+      "destination": "scripts/proteinebm_complex/README.md",
+      "project_sha256": "303720a16d6366df884cfd0cd476e33c2980a68d8b227c5f244d478576906f4f",
+      "adaptation": "Bytes unchanged"
+    },
+    {
+      "source": "config/terminal_variance_all_residues.json",
+      "source_sha256": "490b60b2b17d37f9b5c267eefe602d9639eeac39f1f88024641e24db6c85486c",
+      "destination": "config/terminal_variance_all_residues.json",
+      "project_sha256": "490b60b2b17d37f9b5c267eefe602d9639eeac39f1f88024641e24db6c85486c",
+      "adaptation": "Bytes unchanged"
+    }
+  ],
+  "scientific_execution": false,
+  "historical_approvals_reused": false,
+  "native_validation": "New project-scoped native plans and installed-library inventory still required before scientific execution",
+  "compatibility_source_retention": "Original frozen branches/adapters remain unchanged while active consumers are audited"
+}

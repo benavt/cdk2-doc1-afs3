@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cdk2-doc1-afs3"
+version = "0.1.0"
+requires-python = ">=3.11"
+description = "CDK2/DOC1 AFSample3 and ProteinEBM analysis"
+dependencies = [
+  "structure-clustering @ git+https://github.com/benavt/Structure_Clustering.git@c2848cc15448c64bbe220f32725bcf6e6f6da003",
+]
+
+[tool.setuptools]
+packages = []
