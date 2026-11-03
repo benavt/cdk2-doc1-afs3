@@ -454,9 +454,42 @@ def test_plotly_context_exclusion():
     
     if 'private hostname' not in rule_names:
         print("  ✓ PASS: rangeslider-mask-opp-axis in correct file excluded")
-        return True
     else:
         print("  ✗ FAIL: rangeslider-mask-opp-axis should be excluded in correct file")
+        return False
+    
+    # Test 8: URL template api_key placeholder in correct context PASSES
+    url_template = b'{y}.png?api_key=""],tileSize:256'
+    labels = inspect(url_template, filename='assets/plotly.min.js')
+    rule_names = [lbl[0] if isinstance(lbl, tuple) else lbl for lbl in labels]
+    
+    if 'literal credential' not in rule_names:
+        print("  ✓ PASS: URL template api_key placeholder in correct context excluded")
+    else:
+        print("  ✗ FAIL: URL template api_key placeholder should be excluded in correct context")
+        return False
+    
+    # Test 9: mapboxAccessToken example in correct context PASSES
+    mapbox_example = b'{ mapboxAccessToken: \'my-access-token\' });","More info'
+    labels = inspect(mapbox_example, filename='assets/plotly.min.js')
+    rule_names = [lbl[0] if isinstance(lbl, tuple) else lbl for lbl in labels]
+    
+    if 'literal credential' not in rule_names:
+        print("  ✓ PASS: mapboxAccessToken example in correct context excluded")
+    else:
+        print("  ✗ FAIL: mapboxAccessToken example should be excluded in correct context")
+        return False
+    
+    # Test 10: access_token URL parameter in correct context PASSES
+    access_token_url = b'.push("access_token="+($||pt.ACCESS_TOKEN'
+    labels = inspect(access_token_url, filename='assets/plotly.min.js')
+    rule_names = [lbl[0] if isinstance(lbl, tuple) else lbl for lbl in labels]
+    
+    if 'literal credential' not in rule_names:
+        print("  ✓ PASS: access_token URL parameter in correct context excluded")
+        return True
+    else:
+        print("  ✗ FAIL: access_token URL parameter should be excluded in correct context")
         return False
 
 
@@ -516,6 +549,49 @@ def test_openai_api_key():
         return False
 
 
+def test_plotly_real_credentials_detected():
+    """Test that real credentials in plotly.min.js are still detected."""
+    print("Test: Real credentials in plotly.min.js are detected")
+    
+    from check_privacy import inspect
+    
+    # Build tokens/keys from fragments to avoid GitHub push protection
+    ghp_prefix = 'gh' + 'p_'
+    ghp_token = ghp_prefix + '1234567890abcdefghijklmnopqrstuvwxyz123'
+    
+    sk_prefix = 's' + 'k-proj-'
+    sk_key = sk_prefix + 'abcdefghijklmnopqrstuvwxyz123456'
+    
+    akia_key = 'AKIA' + 'IOSFODNN7EXAMPLE'
+    
+    xoxb_prefix = 'xox' + 'b-'
+    xoxb_token = xoxb_prefix + '1234567890-1234567890123-abcdefghijklmnopqrstuvwxyz'
+    
+    private_key_block = '-----BEGIN ' + 'RSA PRIVATE KEY-----'
+    
+    test_cases = [
+        (f'var token = "{ghp_token}";'.encode(), 'GitHub token', 'GitHub token in different context'),
+        (f'const key = "{sk_key}";'.encode(), 'service token', 'OpenAI key in different context'),
+        (f'AWS_KEY={akia_key}'.encode(), 'cloud access key', 'AWS key in different context'),
+        (f'slack_token="{xoxb_token}"'.encode(), 'service token', 'Slack token in different context'),
+        (private_key_block.encode(), 'private key', 'Private key block'),
+        (b'password="verylongsecretpassword123"', 'literal credential', 'Literal password in different context'),
+    ]
+    
+    all_passed = True
+    for content, expected_rule, description in test_cases:
+        labels = inspect(content, filename='assets/plotly.min.js')
+        rule_names = [lbl[0] if isinstance(lbl, tuple) else lbl for lbl in labels]
+        
+        if expected_rule in rule_names:
+            print(f"  ✓ PASS: Detected {description}")
+        else:
+            print(f"  ✗ FAIL: Did not detect {description}")
+            all_passed = False
+    
+    return all_passed
+
+
 def test_slack_token():
     """Test that Slack tokens are detected."""
     print("Test: Slack token detection")
@@ -573,6 +649,8 @@ def main():
     results.append(test_gzip_decompression())
     print()
     results.append(test_plotly_context_exclusion())
+    print()
+    results.append(test_plotly_real_credentials_detected())
     print()
     results.append(test_github_token_patterns())
     print()

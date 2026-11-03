@@ -42,9 +42,7 @@ FIXTURE_FILES = {
 
 # Files excluded from credential patterns only (hostnames, IPs, and paths still checked)
 # These are third-party libraries with false positives in minified code
-CREDENTIAL_EXCLUDED_FILES = {
-    'assets/plotly.min.js',  # URL parameter placeholders (api_key=) and doc examples in minified library
-}
+CREDENTIAL_EXCLUDED_FILES = set()
 
 # Context-specific exclusions for false positives in known positions
 # Each entry: (filepath, pattern_name, context_before_bytes, context_after_bytes)
@@ -57,6 +55,15 @@ CONTEXT_EXCLUDED_MATCHES = [
     # These contain 'pax' as part of compound words, not the hostname
     ('assets/plotly.min.js', 'private hostname', b'OppAxisCl', b'ssName'),
     ('assets/plotly.min.js', 'private hostname', b'-mask-opp-', b'xis'),
+    # URL template placeholders and example code in plotly.min.js
+    # api_key= in Stadia Maps tile URL templates (multiple instances)
+    ('assets/plotly.min.js', 'literal credential', b'{y}.png?', b'plotly-stamen-terrain"'),
+    ('assets/plotly.min.js', 'literal credential', b'{y}.png?', b'plotly-stamen-toner"'),
+    ('assets/plotly.min.js', 'literal credential', b'{y}.jpg?', b'plotly-stamen-watercolor"'),
+    # mapboxAccessToken example in documentation string
+    ('assets/plotly.min.js', 'literal credential', b'{ mapbox', b' });","More info'),
+    # access_token URL parameter placeholder in analytics code
+    ('assets/plotly.min.js', 'literal credential', b'.params.push("', b'"));var Oe={event:this.type'),
 ]
 
 def extract_png_text_chunks(body):
