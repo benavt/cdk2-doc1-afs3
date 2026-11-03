@@ -18,11 +18,17 @@
     "Preserve original source commit and verified snapshot for rollback"
   ],
   "cutover_order": [
-    "Verify the immutable rollback snapshot and retain the current deployment",
+    "Verify the immutable rollback snapshot, create its approved preservation branch at the recorded original commit and retain the current deployment",
     "With explicit approval, switch Pages build type to workflow without changing the repository URL",
     "Merge the reviewed source migration head",
     "Dispatch the manual workflow on main with the exact manifest SHA-256",
     "Verify the unchanged public URL and representative HTML/JSON/model/download routes",
-    "If needed, redeploy the verified snapshot artifact; do not restore source to a main branch without index.html"
-  ]
+    "If needed, restore legacy Pages from the verified preservation branch root or redeploy the verified snapshot artifact; preserve the source-only main branch"
+  ],
+  "rollback": {
+    "original_main_commit": "d672ba45d8a7723ac07041f41410b1150a2b33e6",
+    "proposed_preservation_branch": "codex/pages-rollback-d672ba45d8a7",
+    "branch_created": false,
+    "method": "Before cutover, create the preservation branch at this exact original commit; if rollback is needed, restore legacy Pages to this branch root without resetting main or rewriting history."
+  }
 }
