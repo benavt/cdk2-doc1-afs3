@@ -1,0 +1,21 @@
+name: Privacy Check
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  privacy-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PDF text extraction tools
+        run: sudo apt-get update -qq && sudo apt-get install -y poppler-utils
+      - name: Install Python test dependencies
+        run: pip install pikepdf reportlab
+      - name: Run test suite
+        run: python3 scripts/test_check_privacy.py
+        env:
+          CI: true
+      - name: Run privacy checker on entire repository
+        run: python3 scripts/check_privacy.py
