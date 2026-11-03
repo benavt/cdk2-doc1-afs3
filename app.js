@@ -18,7 +18,7 @@ function configureRefinementControls(){
 function updateFilterDisplay(){
  for(const row of $('clusterRows').children)row.hidden=!visibleCluster(row.dataset.cluster);
  const groups=data.representatives.filter(x=>visibleCluster(x.cluster));const count=data.clusters.filter(visibleCluster).length;
- $('filterNote').textContent=`${groups.length} represented clusters selected; ${count.toLocaleString()} models in scope. All ${data.models.length.toLocaleString()} model points remain available; outside points are faded. Heat-map filtering reuses saved TM scores.`;
+ $('filterNote').textContent=`${groups.length} clusters · ${count.toLocaleString()} models`;
 }
 function filteredMedoidGrid(){
  const original=data.medoid_tm;if(!original)return null;
@@ -34,7 +34,7 @@ function refreshSupplementary(){
  for(const panel of panels){
   if(panel.hidden){panel.open=false;continue}
   const title=panel.querySelector?.(':scope > summary > span');
-  if(title)title.textContent='S'+(++number)+' · '+title.textContent.replace(/^S\d+\s*·\s*/,'');
+  if(title)title.textContent=title.textContent.replace(/^S\d+\s*·\s*/,'');
  }
  const available=panels.some(panel=>!panel.hidden)||!!$('pairSection')&&!$('pairSection').hidden;
  if($('supplementary'))$('supplementary').hidden=!available;
@@ -72,6 +72,19 @@ async function fetchOptionalJSON(path){
 async function fetchClusteringResidues(){return fetchOptionalJSON('clustering-residues.json')}
 function withoutUnavailableRefolds(current){const retired=new Set(['boltz2_exact_refold_ptm','boltz2_exact_refold_mean_plddt','boltz2_exact_refold_template_tm']);return {...current,schemes:current.schemes.filter(s=>!retired.has(s.key)||s.unavailable!==true||!Array.isArray(s.values)||s.values.length!==current.models.length||!s.values.every(v=>v===null))}}
 function updateMetricOverlayNote(){const node=$('overlayMetricNote');if(!node)return;const note=typeof AISExplorerMetrics!=='undefined'?AISExplorerMetrics.note(data,$('color').value):'';node.hidden=!note;node.textContent=note;}
+function updateSamplingSummary(){
+ const summary=$('samplingSummary');if(!summary)return;
+ const panel=$('samplingPanel');if(panel)panel.hidden=(!$('selectionControls')||$('selectionControls').hidden)&&(!$('tmStateControls')||$('tmStateControls').hidden);
+ const stateActive=typeof tmStateHighlight!=='undefined'&&tmStateHighlight.active;
+ const active=typeof effectiveSelectionHighlight==='function'?effectiveSelectionHighlight():selectionHighlight;
+ const select=$(stateActive?'tmStateSelect':'selectionMethod');
+ if(!active.active){summary.textContent='';return}
+ if(stateActive&&typeof tmStatePayload!=='undefined'&&tmStatePayload){
+  const state=tmStatePreference.state_id==='all'?'All states':tmStatePreference.state_id;
+  const method=tmStatePreference.method==='members'?'Members':tmStatePreference.method.toUpperCase();
+  summary.textContent=state+' · '+method+' · '+active.indices.size.toLocaleString()+' models · TM ≥ '+tmStatePayload.tm_threshold.toFixed(2)+' · core '+tmStatePayload.canonical_positions.length+' residues'+(tmStatePayload.flags?.short_core?' (short)':'');
+ }else summary.textContent=(select?.selectedOptions?.[0]?.textContent||'')+' · '+active.indices.size.toLocaleString()+' models';
+}
 function updateSelectionControls(){
  const method=$('selectionMethod');if(!method)return;
  if(typeof AISExplorerSelections==='undefined'){if($('selectionControls'))$('selectionControls').hidden=true;return}
@@ -80,6 +93,7 @@ function updateSelectionControls(){
  method.disabled=!available;method.value=available?selectionPreference.method:'none';
  for(const [id,value]of [['selectionBalance',selectionPreference.alpha],['selectionPressure',selectionPreference.tau_multiplier],['selectionReplicate',selectionPreference.replicate]]){const node=$(id);if(!node)continue;node.value=String(value);node.disabled=!available||(['selectionBalance','selectionPressure'].includes(id)?!['panel','exact','mh'].includes(selectionPreference.method):!['panel','uniform'].includes(selectionPreference.method))}
  const note=$('selectionStatus');if(note){note.textContent=selectionLoading?'Loading verified saved selections…':selectionPayload?selectionHighlight.note||'':selectionResult.note||'No saved selection highlights are available for this analysis.';if(selectionHighlight.active&&data){const visible=selectionHighlight.orderedIndices.filter(i=>visibleCluster(data.clusters[i])&&!hiddenProjectionCategories.has(AISExplorerSelections.category(scheme(),i))).length;if(visible!==selectionHighlight.indices.size)note.textContent+=' '+visible.toLocaleString()+' highlighted models remain visible after filters.'}}
+ updateSamplingSummary();
 }
 function refreshSelectionHighlight(){
  try{selectionHighlight=typeof AISExplorerSelections!=='undefined'?AISExplorerSelections.select(selectionPayload,selectionPreference):{active:false,indices:new Set(),orderedIndices:[]}}
@@ -130,7 +144,7 @@ function updateStructureScopeNote(){
  if(mode==='plddt')note+=' Reported per-atom pLDDT: dark blue ≥90, light blue 70–90, yellow 50–70, orange <50. Missing observations are gray.';
  if(mode==='regions'&&!regions.length)note+=' Verified saved variance-region labels are unavailable.';
  note+=' Display controls do not alter saved coordinates or downloads; downloads contain the full saved structures.';
- $('structureScopeNote').textContent=note;if(structureMappingError)$('structureDetails')?.setAttribute('open','');
+ $('structureScopeNote').textContent=note;if(structureMappingError)$('structureDetails')?.setAttribute('open','');if(structureMappingError)$('structureDetails')?.setAttribute('open','');
  const legend=$('structureRegionLegend');legend.replaceChildren();
  const entries=mode==='chains'?[{label:'Chain A',color:'#008000'},{label:'Chain B',color:'#00ffff'}]:mode==='plddt'?[{label:'pLDDT ≥90',color:'#0053d6'},{label:'70–90',color:'#65cbf3'},{label:'50–70',color:'#ffdb13'},{label:'<50',color:'#ff7d45'}]:mode==='regions'&&regions.length?[...regions,{label:'Other residues',color:'#aebbc1'}]:[];
  legend.hidden=!entries.length;
@@ -215,6 +229,7 @@ function rigidViewFit(mobile,reference){
  return {rotation,translation};
 }
 function updateStructureViewControls(){
+ if(structureViewMessage)$('structureDetails')?.setAttribute('open','');
  if(structureViewMessage)$('structureDetails')?.setAttribute('open','');
  const button=$('setStructureView');if(!button)return;
  const available=!!viewer?._aisModels?.length&&!!structureViewContext();
@@ -317,7 +332,7 @@ async function drawProjections(){
  const key=data.target+'|'+(data.range_id||'all')+'|'+(data.view_id||'whole')+'|'+scheme().key;
  if(projectionLegendKey!==key){projectionLegendKey=key;hiddenProjectionCategories.clear()}
  await Promise.all(['pca','umap','tsne'].map(async method=>{const p=data.projections[method],axes=projectionAxisTitles(method,p);await AtlasResponsive.react($(method),selectionProjectionTraces(method),{paper_bgcolor:'#fff',plot_bgcolor:'#fff',margin:{l:52,r:25,t:16,b:58},showlegend:false,hovermode:'closest',font:{family:'Arial, sans-serif',size:11,color:'#344f5b'},xaxis:{title:{text:axes[0]},zeroline:false,gridcolor:'#edf1f2'},yaxis:{title:{text:axes[1]},zeroline:false,gridcolor:'#edf1f2'},uirevision:data.target+'-'+(data.range_id||'all')+'-'+(data.view_id||'whole')+'-'+method},{responsive:true,displaylogo:false,modeBarButtonsToRemove:['lasso2d']});$(method).removeAllListeners('plotly_click');$(method).on('plotly_click',e=>{const i=e.points[0].customdata;if(Number.isInteger(i)&&i>=0&&i<data.models.length)(data.model_files?choose(data.clusters[i],i):choose(data.clusters[i])).catch(fail)})}));
- const legend=$('projectionLegend');const legendCount=projectionLegendTraces().length;const panel=$('legendPanel');if(panel.dataset.legendKey!==key){panel.dataset.legendKey=key;panel.open=legendCount<=16}$('legendSummary').textContent='Shared color legend · '+(scheme().short_name||scheme().name)+(legendCount>16?' · '+legendCount+' categories':'');
+ const legend=$('projectionLegend');const legendCount=projectionLegendTraces().length;const panel=$('legendPanel');if(panel.dataset.legendKey!==key){panel.dataset.legendKey=key;panel.open=legendCount<=16}$('legendSummary').textContent='Legend';
  await AtlasResponsive.react(legend,projectionLegendTraces(),{paper_bgcolor:'#fff',plot_bgcolor:'#fff',margin:{l:8,r:8,t:8,b:8},xaxis:{visible:false,range:[1,2],fixedrange:true},yaxis:{visible:false,range:[1,2],fixedrange:true},showlegend:true,legend:{orientation:'h',font:{size:12}},uirevision:projectionLegendKey},{displayModeBar:false,displaylogo:false,staticPlot:false});
  legend.removeAllListeners('plotly_legendclick');legend.removeAllListeners('plotly_legenddoubleclick');
  legend.on('plotly_legendclick',event=>changeProjectionCategory(event));
@@ -400,7 +415,7 @@ async function choose(label,modelIndex=null){
  const ensemble=!exact&&$('modelMode').value==='ensemble'&&cluster.ensemble_text;
  viewer._aisModels=ensemble?viewer.addModels(cluster.ensemble_text,'pdb'):[viewer.addModel(coordinate,cluster.format)];viewer._aisDescriptor=cluster;viewer._aisEnsemble=!!ensemble;
  alignStructureToSetView();styleSavedStructure(viewer,cluster.color,ensemble ? .62 : 1);frameSelectedStructure();viewer.spin(spinning);
- $('modelTitle').textContent=exact?cluster.model+' · exact selected model':label+' · '+(ensemble?(data.ensemble_kind||'comparison ensemble'):(current.representative_kind||'structural representative'));
+ $('modelTitle').textContent=exact?'Selected model':ensemble?'Ensemble':'Representative';
  $('modelInfo').textContent=`${cluster.model} · ${cluster.method} · ${label} · ${cluster.count.toLocaleString()} ${cluster.count===1?'model':'models'} in cluster (${population(cluster.count)})${Number.isFinite(referenceSimilarity(cluster))?' · TM (5–95): '+referenceSimilarity(cluster).toFixed(3):''}`;
  if(modelDownloadURL)URL.revokeObjectURL(modelDownloadURL);modelDownloadURL=URL.createObjectURL(new Blob([coordinate],{type:'text/plain'}));$('structure').hidden=false;$('structure').href=modelDownloadURL;$('structure').download=cluster.file.split('/').pop();
  if(ensembleDownloadURL)URL.revokeObjectURL(ensembleDownloadURL);$('ensemblePdb').hidden=!cluster.ensemble_file;if(cluster.ensemble_file)$('ensemblePdb').href=cluster.ensemble_file;$('ensemblePse').hidden=!cluster.ensemble_pse;
@@ -490,7 +505,7 @@ async function load(target,viewId='whole',rangeId='all'){
  const {base,loaded,view}=await savedViewSelection(found,range,viewId);if(request!==targetRequest)return;const [enriched,highlightResult]=await Promise.all([metricOverlayLoader?metricOverlayLoader.enrich(loaded):withoutUnavailableRefolds(loaded),selectionLoader?selectionLoader.load(loaded):{status:'unavailable',payload:null,note:'No saved selection highlights are available for this analysis.'}]);if(request!==targetRequest)return;return await (renderQueue=renderQueue.catch(()=>{}).then(async()=>{if(request!==targetRequest)return;data=enriched;selectionResult=highlightResult;selectionPayload=highlightResult.payload;selected=null;selectedModelIndex=null;if(data.visible_view_policy&&(view.id!==viewId||range.id!==rangeId||found.id!==target))window.history?.replaceState(null,'','#'+analysisHash(found.id,range.id,view.id));configureResidueRangeControls(found,range,rangeId);configureRefinementControls();configureStructureControls();configureModelMode();window.dispatchEvent(new CustomEvent('atlas:cohort',{detail:{current:data,base,range}}));
  const previousColor=$('color').value,requestedColor=new URLSearchParams(location.search).get('color');
  $('analysisViewLabel').hidden=false;$('analysisView').replaceChildren(...(base.views||[]).map(x=>Object.assign(document.createElement('option'),{value:x.id,textContent:x.name+(x.available===false?' — '+(x.status||'awaiting verified results'):''),disabled:x.available===false})));$('analysisView').value=view?.id||'whole';
- $('title').textContent=data.view_title||data.target;$('summary').textContent=`${range.name} · ${data.models.length.toLocaleString()} models · ${new Set(data.methods).size} methods · ${data.representatives.length} structural clusters · ${data.clusters.filter(x=>x.endsWith(".unassigned")).length.toLocaleString()} unassigned · ${data.residues} residues in supplied construct`;
+ $('title').textContent=data.target;$('summary').textContent=`${data.models.length.toLocaleString()} models · ${data.representatives.length} clusters${data.clusters.some(x=>x.endsWith('.unassigned'))?' · '+data.clusters.filter(x=>x.endsWith('.unassigned')).length.toLocaleString()+' unassigned':''}`;
  $('representativePolicy').textContent=data.representative_policy||'One exact structural medoid per cluster, selected by mean pairwise rigid-fit Cα RMSD. Medoids are structural representatives, independently of confidence.';
  $('clusterMethod').textContent=data.clustering_method_note||'All projections use the same retained, sequence-aligned Cα distance features and the default terminal-variance mask. Clusters preserve disconnected components of the seed-42 UMAP 15-neighbor graph; candidate subdivisions require feature silhouette ≥ 0.15 and agreement ≥ 0.80 with seeds 7 and 123. Cluster colors identify the same memberships in every projection.';
  $('metricNote').hidden=!data.metric_note;$('metricNote').textContent=data.metric_note||'';$('tmColumn').hidden=!data.metric_note;
@@ -510,7 +525,7 @@ async function load(target,viewId='whole',rangeId='all'){
 }
 async function start(){
  document.addEventListener('click',navigateSavedSection);
- const loaded=await Promise.all([json('atlas.json'),fetchClusteringResidues(),fetchOptionalJSON('residue-ranges.json'),fetchOptionalJSON('projection-metadata.json'),fetchOptionalJSON('supplementary-metadata.json'),fetchOptionalJSON('metric-overlays.json'),fetchOptionalJSON('selection-highlights.json')]);metricOverlayLoader=typeof AISExplorerMetrics!=='undefined'?AISExplorerMetrics.createLoader(loaded[5]):null;selectionLoader=typeof AISExplorerSelections!=='undefined'?AISExplorerSelections.createLoader(loaded[6]):null;atlas=loaded[0];clusteringResidueCatalog=loaded[1];projectionMetadataCatalog=loaded[3];supplementaryMetadataCatalog=loaded[4];const rangeCatalog=loaded[2];atlas={...atlas,targets:atlas.targets.map(target=>({...target,residue_ranges:rangeCatalog.targets?.[target.id]?.residue_ranges||target.residue_ranges}))};for(const t of atlas.targets){const a=document.createElement('a');a.href='#'+encodeURIComponent(t.id);a.textContent=t.id;a.dataset.target=t.id;$('targets').append(a)}
+ const loaded=await Promise.all([json('atlas.json'),fetchClusteringResidues(),fetchOptionalJSON('residue-ranges.json'),fetchOptionalJSON('projection-metadata.json'),fetchOptionalJSON('supplementary-metadata.json'),fetchOptionalJSON('metric-overlays.json'),fetchOptionalJSON('selection-highlights.json')]);metricOverlayLoader=typeof AISExplorerMetrics!=='undefined'?AISExplorerMetrics.createLoader(loaded[5]):null;selectionLoader=typeof AISExplorerSelections!=='undefined'?AISExplorerSelections.createLoader(loaded[6]):null;atlas=loaded[0];clusteringResidueCatalog=loaded[1];projectionMetadataCatalog=loaded[3];supplementaryMetadataCatalog=loaded[4];const rangeCatalog=loaded[2];atlas={...atlas,targets:atlas.targets.map(target=>({...target,residue_ranges:rangeCatalog.targets?.[target.id]?.residue_ranges||target.residue_ranges}))};for(const t of atlas.targets){const a=document.createElement('a');a.href='#'+encodeURIComponent(t.id);a.textContent=t.id.replace(/_bmr\d+$/i,'');a.title=t.id;a.setAttribute('aria-label',t.id);a.dataset.target=t.id;$('targets').append(a)}
  viewer=$3Dmol.createViewer($('molecule'),{backgroundColor:'white',antialias:true});$('clusterSelect').onchange=()=>{if($('clusterSelect').value)choose($('clusterSelect').value).catch(fail)};
  $('structureScope').onchange=()=>{structureScopePreference=$('structureScope').value;restyleStructureViews()};$('structureColor').onchange=restyleStructureViews;
  $('modelMode').onchange=()=>{if(selected)choose(selected,$('modelMode').value==='ensemble'?null:selectedModelIndex).catch(fail)};$('color').onchange=()=>{updateMetricOverlayNote();scheduleDraw().catch(fail)};$('projection').onchange=showProjection;$('clear').onclick=()=>{clearStructure();for(const m of ['pca','umap','tsne'])Plotly.relayout($(m),{annotations:[],'xaxis.autorange':true,'yaxis.autorange':true})};

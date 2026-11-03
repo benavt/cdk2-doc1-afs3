@@ -13,6 +13,7 @@
   for(const [name,value]of [['--explorer-heading-height',heading.getBoundingClientRect().height+'px'],['--explorer-chrome-height',chrome+'px'],['--explorer-screen-height',height+'px']])if(explorer.style.getPropertyValue(name)!==value)explorer.style.setProperty(name,value);
  }
  function showScreen(name,smooth=true){
+  if(name==='comparison'&&!featured)feature(lastFeatured);
   const screen=$(name==='context'?'contextScreen':'comparisonScreen'),behavior=smooth&&!matchMedia('(prefers-reduced-motion: reduce)').matches?'smooth':'instant';
   if(matchMedia('(max-width:699px)').matches)screen.scrollIntoView({block:'start',behavior});
   else $('explorerScreens').scrollTo({top:screen.offsetTop,behavior});
@@ -48,7 +49,7 @@
    if(active)panel.querySelector('.view-heading').insertBefore(tools,button);
   }
   if(!key){$('featuredPlotHost').append(tools);$('umapTab').tabIndex=0;}
-  $('noFeatured').hidden=!!key;$('alternativeHeading').textContent=key?'Other views':'All views';$('overviewViews').setAttribute('aria-pressed',String(!key));$('overviewViews').textContent=key?'Show all four views':'Show alternatives';$('plots').classList.toggle('all-views',!key);
+  $('alternativeHeading').textContent=key?'Other views':'All views';$('overviewViews').setAttribute('aria-pressed',String(!key));$('overviewViews').textContent=key?'All views':'Alternatives';$('plots').classList.toggle('all-views',!key);
   document.querySelector('.plot-column').classList.toggle('is-overview',!key);tools.hidden=!key;
   resize();
  }
@@ -63,18 +64,7 @@
  window.addEventListener('atlas:cohort', event => {
   const { current, base } = event.detail;currentTarget=current.target;
   const baseCounts=new Map();base.methods.forEach(method=>baseCounts.set(method,(baseCounts.get(method)||0)+1));
-  const fullCount=base.models.length,subset=current.models.length<fullCount;
   const counts=new Map();current.methods.forEach(method=>counts.set(method,(counts.get(method)||0)+1));
-  const box = document.getElementById('cohortSummary');
-  box.replaceChildren();
-  const strong = document.createElement('strong');
-  strong.textContent=subset?`Saved subset · ${current.models.length.toLocaleString()} of ${fullCount.toLocaleString()} models`:`Full saved cohort · ${current.models.length.toLocaleString()} models · ${counts.size} sampling methods`;
-  const note = document.createElement('p');
-  note.textContent = subset ? 'Only members of this saved subset appear here. Counts below describe this selection.' : 'Each projection shows the same saved model cohort; Bonsai shows selected representative ensembles. Filters reuse the saved memberships.';
-  box.append(strong, note);
-  if (subset && base.views?.some(view => view.id === 'whole')) {
-   const link = document.createElement('a'); link.href = '#' + current.target + '?view=whole'; link.textContent = 'Show all '+fullCount.toLocaleString()+' saved models'; box.append(link);
-  }
   const table = document.createElement('table');
   table.innerHTML = '<thead><tr><th scope="col">Sampling method</th><th scope="col">Shown</th><th scope="col">Full target</th></tr></thead>';
   const body = document.createElement('tbody');

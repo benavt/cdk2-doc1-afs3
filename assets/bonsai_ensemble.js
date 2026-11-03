@@ -50,7 +50,7 @@
   function create(container, {onChoose = () => {}, detailsHref = null} = {}) {
     container.replaceChildren(); container.style.position = 'relative';
     const toolbar = document.createElement('div'); toolbar.className = 'bonsai-toolbar'; toolbar.style.cssText = 'display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:12px 0';
-    const label = document.createElement('label'); label.append('Tree layout ');
+    const label = document.createElement('label'); label.append('Layout ');
     const select = document.createElement('select'); select.setAttribute('aria-label', 'Bonsai tree layout'); label.append(select);
     const reset = document.createElement('button'); reset.textContent = 'Reset tree view';
     const download = document.createElement('button'); download.textContent = 'Download colored SVG';
@@ -133,9 +133,9 @@
           entry.append(dot, String(value ?? 'Unspecified')); legend.append(entry);
         }
       }
-      note.textContent = `${payload.models.length} models · ${data.representatives.length} clusters. `+(data.model_files?'Select a point to view that exact model.':'Select a point to view its cluster.')+(highlightedModels?` ${visibleHighlighted} of ${highlightedModels.size} highlighted models shown.`:'');
+      note.textContent = `${payload.models.length} models · ${data.representatives.length} clusters.`+(highlightedModels?` ${visibleHighlighted} of ${highlightedModels.size} highlights.`:'');
       if (detailsHref) {
-        const link = document.createElement('a'); link.href = detailsHref; link.className = 'bonsai-details-link'; link.textContent = 'Details'; link.setAttribute('aria-label', 'Bonsai plot details and controls');
+        const link = document.createElement('a'); link.href = detailsHref; link.className = 'bonsai-details-link'; link.textContent = 'Methods'; link.setAttribute('aria-label', 'Bonsai plot details and controls');
         note.append(' ', link);
       }
       info.textContent = ''; info.hidden = true;
