@@ -12239,5 +12239,8 @@
       "sha256": "79fab1903a804dac15096ad2e0910c3ad813fe1d15756cf0fb5ef2212ea037fc",
       "git_blob_oid": "2c56d5df7cc9d75ff7812d40c92bac2c50b2e84a"
     }
-  ]
+  ],
+  "presentation": {
+    "clustering_order": "hdbscan-first"
+  }
 }

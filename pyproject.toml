@@ -8,7 +8,7 @@ version = "0.1.0"
 requires-python = ">=3.11"
 description = "CDK2/DOC1 AFSample3 and ProteinEBM analysis"
 dependencies = [
-  "structure-clustering @ git+https://github.com/benavt/Structure_Clustering.git@3b4705a3b1151f02714e5f588753dc16a5987a14",
+  "structure-clustering @ git+https://github.com/benavt/Structure_Clustering.git@365e000073ce01b79495b9478af757d062d3668b",
 ]
 
 [tool.setuptools]

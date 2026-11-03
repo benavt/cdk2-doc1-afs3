@@ -27,6 +27,13 @@ Before adopting the canonical renderer for a later dependency upgrade, complete
 UI/feature parity against the project's currently approved presentation. A library
 pin bump never silently changes scientific results or an approved saved view.
 
+The reviewed `presentation.clustering_order: hdbscan-first` option opens HDBSCAN
+and keeps UMAP KNN as the alternative and unavailable-result fallback. Explicit
+saved-view links retain their selection. The shared library updates only the
+clustering menu/routing functions and app cache key; all scientific files and
+project-specific point-model inspection remain unchanged. Site parity checks
+derive both presentation files from the verified frozen originals.
+
 The copied scientific controllers retain their numeric settings and frozen source
 anchors. They are source-migration candidates, not approval to execute or resume
 historical batches. New project-scoped source/runtime inventories and native
