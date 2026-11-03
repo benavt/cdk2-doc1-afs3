@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "targets": [
+    {
+      "id": "CDK2_DOC1",
+      "data": "CDK2_DOC1/primary.json"
+    },
+    {
+      "id": "CDK2_DOC1t",
+      "data": "CDK2_DOC1t/primary.json"
+    }
+  ],
+  "source_publication_commit": "d672ba45d8a7723ac07041f41410b1150a2b33e6",
+  "settings_policy": "The saved publication defines its exact target/range/view identities. New scientific settings require a separate reviewed run."
+}

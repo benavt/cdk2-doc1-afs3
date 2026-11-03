@@ -1,0 +1,63 @@
+name: Project source and shared privacy checks
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          submodules: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m unittest discover -s tests -p test_repository_contract.py
+  shared-privacy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          submodules: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Resolve the exact project dependency
+        id: library
+        run: |
+          python - <<'PY'
+          import os, re, tomllib
+          from pathlib import Path
+          deps = tomllib.loads(Path('pyproject.toml').read_text())['project']['dependencies']
+          assert len(deps) == 1
+          match = re.fullmatch(r'structure-clustering @ git\+https://github\.com/benavt/Structure_Clustering\.git@([0-9a-f]{40})', deps[0])
+          assert match, 'An exact reviewed commit is required'
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as handle:
+              handle.write('sha=' + match[1] + '\n')
+          PY
+      - name: Require read-only access to the private library
+        env:
+          LIBRARY_READ_TOKEN: ${{ secrets.STRUCTURE_CLUSTERING_READ_TOKEN }}
+        run: test -n "$LIBRARY_READ_TOKEN"
+      - uses: actions/checkout@v4
+        with:
+          repository: benavt/Structure_Clustering
+          ref: ${{ steps.library.outputs.sha }}
+          token: ${{ secrets.STRUCTURE_CLUSTERING_READ_TOKEN }}
+          path: .dependencies/Structure_Clustering
+          persist-credentials: false
+          submodules: false
+          sparse-checkout: |
+            structure_clustering
+            src
+            scripts
+            config
+      - name: Install only the pinned portable library and project metadata
+        run: |
+          python -m pip install --no-deps .dependencies/Structure_Clustering
+          python -m pip install --no-deps .
+      - run: structure-clustering check-privacy --tracked

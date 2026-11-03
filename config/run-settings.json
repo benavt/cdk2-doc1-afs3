@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "new_runs": [],
+  "state": "no_scientific_execution_selected",
+  "policy": "Create a new immutable project plan with exact library/native-source identities before running migrated scientific adapters; historical approvals do not transfer."
+}
