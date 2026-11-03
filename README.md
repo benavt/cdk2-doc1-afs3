@@ -62,7 +62,7 @@ For a new source-only checkout, use Git partial clone (`git clone --filter=blob:
 to avoid downloading historical publication blobs. Git history is preserved.
 The separate research-workflows policy pin retains the producer contract.
 
-## Proposed workflow library update
+## Workflow library contract
 
 The exact dependency pin includes the shared immutable-intake, run-local metrics,
 verified recovery and report-pagination changes. Merge this pin update only after
@@ -76,8 +76,8 @@ all conformers, preserve native chain IDs, require explicit chain correspondence
 when needed, and leave expanded conformers unscored without an explicit score map.
 Metrics are fresh and run-local unless an explicit database is supplied; that
 database's stored label rules are retained unless overridden. New run recovery
-requires identical inputs, settings, library revision and runtime. Molecular
-reports are opt-in and include every cluster across additional pages.
+requires identical inputs, settings, library revision and runtime. The complete molecular report is the default; `--analysis-only` selects the
+reduced deliverable. All clusters receive additional report pages when needed.
 
 The project-owned ProteinEBM controllers retain their scientific settings and
 frozen paths. Their historical manifests do not acquire the generic recovery

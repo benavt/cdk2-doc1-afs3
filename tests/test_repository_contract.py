@@ -25,7 +25,7 @@ class Contract(unittest.TestCase):
         self.assertEqual(json.loads((ROOT/'config/run-settings.json').read_text())['new_runs'],[])
     def test_tracked_tree_is_source_only(self):
         names=subprocess.check_output(['git','ls-files','-z'],cwd=ROOT).decode().split('\0')
-        allowed={'.github','.gitignore','.gitmodules','AGENTS.md','LICENSES','README.md','config','external','pyproject.toml','scripts','site','tests'}
+        allowed={'.github','.gitignore','.gitmodules','AGENTS.md','LICENSES','README.md','docs','config','external','pyproject.toml','scripts','site','tests'}
         forbidden={'.cif','.pdb','.pse','.npy','.npz','.sqlite','.sqlite3','.zip','.gz'}
         for name in filter(None,names):
             self.assertIn(name.split('/')[0],allowed)
