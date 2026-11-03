@@ -54,6 +54,8 @@ jobs:
             src
             scripts
             config
+            structure
+            patches
       - name: Install only the pinned portable library and project metadata
         run: |
           python -m pip install --no-deps .dependencies/Structure_Clustering
