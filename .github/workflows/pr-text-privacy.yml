@@ -1,0 +1,61 @@
+name: PR text privacy
+# Runs again whenever the title or description is edited, not only on pushes.
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+permissions:
+  contents: read
+jobs:
+  pr-text:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          submodules: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Resolve the exact project dependency
+        id: library
+        run: |
+          python - <<'PY'
+          import os, re, tomllib
+          from pathlib import Path
+          deps = tomllib.loads(Path('pyproject.toml').read_text())['project']['dependencies']
+          assert len(deps) == 1
+          match = re.fullmatch(r'structure-clustering @ git\+https://github\.com/benavt/Structure_Clustering\.git@([0-9a-f]{40})', deps[0])
+          assert match, 'An exact reviewed commit is required'
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as handle:
+              handle.write('sha=' + match[1] + '\n')
+          PY
+      - name: Require read-only access to the private library
+        env:
+          LIBRARY_READ_TOKEN: ${{ secrets.STRUCTURE_CLUSTERING_READ_TOKEN }}
+        run: test -n "$LIBRARY_READ_TOKEN"
+      - uses: actions/checkout@v4
+        with:
+          repository: benavt/Structure_Clustering
+          ref: ${{ steps.library.outputs.sha }}
+          token: ${{ secrets.STRUCTURE_CLUSTERING_READ_TOKEN }}
+          path: .dependencies/Structure_Clustering
+          persist-credentials: false
+          submodules: false
+          sparse-checkout: |
+            structure_clustering
+            src
+            scripts
+            config
+            structure
+            patches
+      - name: Install only the pinned portable library and project metadata
+        run: |
+          python -m pip install --no-deps .dependencies/Structure_Clustering
+          python -m pip install --no-deps .
+      - name: PR text checker tests
+        run: python -m unittest -v tests.test_check_pr_text
+      - name: Scan the pull request title and description
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: python scripts/check_pr_text.py
